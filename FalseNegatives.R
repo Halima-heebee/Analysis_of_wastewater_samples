@@ -1,22 +1,24 @@
-dirs <- list.dirs("/home/mbxha18/allcombinations/New_illumina/exeter/exeter_ill_vs_exeter_ont_NT002", recursive = FALSE)
-dirs <- dirs[!grepl("RECYCLE", dirs)]
-library(readr)
+#Loose Lab Code (MG), 17.05.2023. Locates false negative positions called using either/both technologies. Graph 1 displays the count of each false negative position by sequencing technology. Graph 2 displays the count of each false negative for each sequencing technology on a position-by-position basis.
+
+dirs <- list.dirs("/home/mbxha18/allcombinations/New_illumina/exeter/exeter_ill_vs_exeter_ont_NT002", recursive = FALSE) #Provide directory containing relevant Illumina and ONT varscans. Directory structure should be one folder for each well (i.e. A1-NIMAGEN-001, A2-NIMAGEN-002 etc).
+dirs <- dirs[!grepl("RECYCLE", dirs)] #removes the recycle bin when not running on terminal
+library(readr) #loads appropriate packages into environment
 library(dplyr)
 library(stringr)
 library(tidyr)
 library(ggplot2)
 
 for (d in dirs) {
-  setwd("/home/mbxha18/allcombinations/New_illumina/exeter/DAVE")
-  list29903 <- read_table("29903.csv")
-  all <- read_table("Copy of TWIST_synthetic_mixes_sample_sheet_150222.txt")
-  selectedRows <- all[grep(substr(d, 82, 84), all$plate_well), ]
-  alphaEF <- as.numeric(selectedRows$alpha_exp_frequency[1])
+  setwd("/home/mbxha18/allcombinations/New_illumina/exeter/DAVE") #Path containing list of positions in genome, Control SNP Locations, and the relationship between plate well and synthetic SARS-CoV-2 mixture
+  list29903 <- read_table("29903.csv") #List of positions in genome
+  all <- read_table("Copy of TWIST_synthetic_mixes_sample_sheet_150222.txt") #Matches plate well to expected frequencies of SARS-CoV-2 variants. Note - for exeter NT001, change this file to underscore.txt
+  selectedRows <- all[grep(substr(d, 82, 84), all$plate_well), ] #Note - change these numbers dependent on the naming of the path - important for Exeter NT001.
+  alphaEF <- as.numeric(selectedRows$alpha_exp_frequency[1]) #Extracts expected frequency from plate well data
   betaEF <- selectedRows$beta_exp_frequency[1]
   deltaC23EF <- selectedRows$deltaC23_exp_frequency[1]
   deltaC29EF <- selectedRows$deltaC29_exp_frequency[1]
   omicronEF <- selectedRows$omicron_exp_frequency[1]
-  alphacontrol <- read_table("AlphaC15.tsv")
+  alphacontrol <- read_table("AlphaC15.tsv") #Loads Positions of Control SNPs
   alphacontrol$expectedfrequency <- alphaEF
   alphacontrol$lineage <- c("alpha")
   betacontrol <- read_table("BetaC16.tsv")
@@ -32,21 +34,21 @@ for (d in dirs) {
   omicroncontrol$expectedfrequency <- omicronEF
   omicroncontrol$lineage <- c("omicron")
   expfrequencyonly <- select(selectedRows, c(alpha_exp_frequency,beta_exp_frequency, deltaC23_exp_frequency, deltaC29_exp_frequency, omicron_exp_frequency))
-  expfrequencyonly <- expfrequencyonly[, colSums(expfrequencyonly != 0) > 0]
+  expfrequencyonly <- expfrequencyonly[, colSums(expfrequencyonly != 0) > 0] #selects only SNPs with an expected frequency
   list <- colnames(expfrequencyonly)
   list <- gsub('_exp_frequency','', list)
-  List2 <- paste(unlist(list),collapse="")
+  List2 <- paste(unlist(list),collapse="") #lists expected lineages for the same
   # Set the working directory
   setwd(d)
   # Read the LR output file
-  files <- list.files(pattern = "\\.ont.mincov1.mpileup2snp.nostrandbiasfilter.varscan.tsv$")
+  files <- list.files(pattern = "\\.ont.mincov1.mpileup2snp.nostrandbiasfilter.varscan.tsv$") #read in varscan - here you select which combination of thresholds you wish to use
   #print(files)
   LRoutput <- read.table(files[1], header=TRUE)
   LRoutput <- separate(data = LRoutput, col = "Cons.Cov.Reads1.Reads2.Freq.P.value", into = c("Col", "Cov", "Reads1", "Reads2", "VarFreq", "P-value"), sep = "\\:")
-  LRoutput$VarFreq <- as.numeric(sub("%", "", LRoutput$VarFreq, fixed = TRUE)) / 100
+  LRoutput$VarFreq <- as.numeric(sub("%", "", LRoutput$VarFreq, fixed = TRUE)) / 100 #Removes % sign from VarFreq column of mpileup
   #print(LRoutput)
   # Read the LR depths file
-  depth <- list.files(pattern = "\\.ont.samtools.cov")
+  depth <- list.files(pattern = "\\.ont.samtools.cov") #read in coverage file, generated using SamTools
   LRdepths <- read.table(depth[1], col.names = c("NAME", "POS", "DEPTH"))
   
   # Define the list of controls
@@ -62,26 +64,26 @@ for (d in dirs) {
   truecontrols <- allcontrols[allcontrols$lineage %in% list3,]
   
   # Compute the TP and FP for the LR output
-  LRvsTRUE <- merge(LRoutput, truecontrols, by.x = c("Position", "Var"), by.y = c("POS", "ALT"))
+  LRvsTRUE <- merge(LRoutput, truecontrols, by.x = c("Position", "Var"), by.y = c("POS", "ALT")) #identifies true positives
   TP_ONT <- as.data.frame(LRvsTRUE)
-  assign(paste0("TP_ONT", substr(d, 11,100)), TP_ONT)
+  assign(paste0("TP_ONT", substr(d, 11,100)), TP_ONT) #gives each sample (i.e. each plate well) a true positive dataframe
  
   
-  FP_ONT <- anti_join(LRoutput, truecontrols, by = c("Position" = "POS"))
+  FP_ONT <- anti_join(LRoutput, truecontrols, by = c("Position" = "POS")) #identifies false positives
   assign(paste0("FP_ONT", substr(d, 11,100)), FP_ONT)
   # Compute the FN for the true SNPs
-  FN_ONT <- anti_join(truecontrols, LRvsTRUE, by = c("POS" = "Position"))
+  FN_ONT <- anti_join(truecontrols, LRvsTRUE, by = c("POS" = "Position")) #gives each sample (i.e. each plate well) a false positive dataframe
   
   FN_ONT$DEPTH <- LRdepths$DEPTH[match(FN_ONT$POS, LRdepths$POS)]
   assign(paste0("FN_ONT", substr(d, 11,100)), FN_ONT)
   # Filter the FN based on coverage
-  #FNbecausecoverageONT <- FN_ONT[[d]][FN_ONT[[d]]$DEPTH < 3,]
+  #FNbecausecoverageONT <- FN_ONT[[d]][FN_ONT[[d]]$DEPTH < 3,] #can use to identify which false negatives arise from low coverage
   #FNbecausejustnotcalledONT <- FN_ONT[[d]][FN_ONT[[d]]$DEPTH > 3,]
   
   # Compute the TN for the LR output
   TNBEFORELR <- anti_join(list29903, truecontrols, by = c("POS" = "POS"))
-  TN_ONT <- anti_join(TNBEFORELR, LRoutput, by = c("POS" = "Position"))
-  assign(paste0("TN_ONT", substr(d, 11,100)), TN_ONT)
+  TN_ONT <- anti_join(TNBEFORELR, LRoutput, by = c("POS" = "Position")) #identifies true negatives
+  assign(paste0("TN_ONT", substr(d, 11,100)), TN_ONT) #gives each sample (i.e. each plate well) a true negative dataframe
 
 # Add the observed frequency, depth, lineage, and sample columns to the total expected frequency data frame
   total_expected_frequency$observedfrequency <- LRoutput$VarFreq[match(total_expected_frequency$POS, LRoutput$Position)]
@@ -95,10 +97,10 @@ for (d in dirs) {
   assign(paste0("total_ONT", substr(d, 11,100)), total_ONT)
 }
 for (d in dirs) {
-  setwd("/home/mbxha18/allcombinations/New_illumina/exeter/DAVE")
+  setwd("/home/mbxha18/allcombinations/New_illumina/exeter/DAVE") #Does the exact same process for Illumina
   list29903 <- read_table("29903.csv")
-  all <- read_table("Copy of TWIST_synthetic_mixes_sample_sheet_150222.txt")
-  selectedRows <- all[grep(substr(d, 82, 84), all$plate_well), ]
+  all <- read_table("Copy of TWIST_synthetic_mixes_sample_sheet_150222.txt") #Remember to change to underscore.txt for Exeter NT001
+  selectedRows <- all[grep(substr(d, 82, 84), all$plate_well), ] #Careful
   alphaEF <- as.numeric(selectedRows$alpha_exp_frequency[1])
   betaEF <- selectedRows$beta_exp_frequency[1]
   deltaC23EF <- selectedRows$deltaC23_exp_frequency[1]
@@ -127,14 +129,14 @@ for (d in dirs) {
   # Set the working directory
   setwd(d)
   # Read the LR output file
-  files <- list.files(pattern = "\\.ill.mincov1.mpileup2snp.nostrandbiasfilter.varscan.tsv$")
+  files <- list.files(pattern = "\\.ill.mincov1.mpileup2snp.nostrandbiasfilter.varscan.tsv$") #Choose wisely
   #print(files)
   LRoutput <- read.table(files[1], header=TRUE)
   LRoutput <- separate(data = LRoutput, col = "Cons.Cov.Reads1.Reads2.Freq.P.value", into = c("Col", "Cov", "Reads1", "Reads2", "VarFreq", "P-value"), sep = "\\:")
   LRoutput$VarFreq <- as.numeric(sub("%", "", LRoutput$VarFreq, fixed = TRUE)) / 100
   #print(LRoutput)
   # Read the LR depths file
-  depth <- list.files(pattern = "\\.ill.samtools.cov")
+  depth <- list.files(pattern = "\\.ill.samtools.cov") #Manual input required here - a SamTools coverage file
   LRdepths <- read.table(depth[1], col.names = c("NAME", "POS", "DEPTH"))
   
   # Define the list of controls
@@ -183,75 +185,16 @@ for (d in dirs) {
   assign(paste0("total_ILL", substr(d, 11,100)), total_ILL)
 }
 
-all3ONT <- do.call(rbind, lapply( ls(patt="total_ONT"), get) )
-all3ILL <- do.call(rbind, lapply( ls(patt="total_ILL"), get) )
-all3ONT$sequencing <- "ONT"
-all3ILL$sequencing <- "ILL"
-all3all <- rbind(all3ONT,all3ILL)
-library(ggplot2)
-
-all3ONT <- all3ONT %>% filter(all3ONT$expectedfrequency > 0)
-all3ILL <- all3ILL %>% filter(all3ILL$expectedfrequency > 0)
-
-
-
-
-
-
-
-
-
-#Observed versus Observed
-StatClipEllipse <- ggproto("StatClipEllipse", Stat,
-                           required_aes = c("x", "y"),
-                           compute_group = function(data, scales, type = "t", level = 0.95,
-                                                    segments = 51, na.rm = FALSE) {
-                             xx <- ggplot2:::calculate_ellipse(data = data, vars = c("x", "y"), type = type,
-                                                               level = level, segments = segments)
-                             xx %>% mutate(x=pmax(x, 0)) %>%
-                               mutate(x=pmin(x, 1))
-                           }
-)
-stat_clip_ellipse <- function(mapping = NULL, data = NULL,
-                              geom = "path", position = "identity",
-                              ...,
-                              type = "t",
-                              level = 0.90,
-                              segments = 51,
-                              na.rm = FALSE,
-                              show.legend = NA,
-                              inherit.aes = TRUE) {
-  layer(
-    data = data,
-    mapping = mapping,
-    stat = StatClipEllipse,
-    geom = geom,
-    position = position,
-    show.legend = show.legend,
-    inherit.aes = inherit.aes,
-    params = list(
-      type = type,
-      level = level,
-      segments = segments,
-      na.rm = na.rm,
-      ...
-    )
-  )
-}
-ggplot(data=all3ONT, aes(all3ONT$observedfrequency, all3ILL$observedfrequency)) + theme_classic() + stat_clip_ellipse(fill="red", geom="polygon",level=0.95,alpha=0.6) + xlim(c(0,1)) + ylim(c(0,1)) + xlab("ONT Observed Frequency") + ylab("Illumina Observed Frequency") + geom_point(aes(x= all3ONT$observedfrequency, y=all3ILL$observedfrequency))
-corr <- cor.test(x=all3ONT$observedfrequency, y=all3ILL$observedfrequency, method = 'pearson') #calculates Spearman's Rank Correlation Coefficient
-corr
-
 #False Negatives
 
 library(plyr)
-df_list <- mget(ls(pattern = "FN_ILL.*"))
-FN_ILL <- plyr::rbind.fill(df_list)
+df_list <- mget(ls(pattern = "FN_ILL.*")) #merge all Illuminas False Negative dataframes together
+FN_ILL <- plyr::rbind.fill(df_list) 
 FN_ILL$sequencing <- "ILL"
-df_list <- mget(ls(pattern = "FN_ONT*"))
+df_list <- mget(ls(pattern = "FN_ONT*")) #merge all ONTs False Negative dataframes together
 FN_ONT <- plyr::rbind.fill(df_list)
 FN_ONT$sequencing <- "ONT"
-FN_ONT$count <- FN_ONT %>% add_count(POS)
+FN_ONT$count <- FN_ONT %>% add_count(POS) #add count of False Negatives at each position for that sequencing technology
 FN_ILL$count <- FN_ILL %>% add_count(POS)
 
 FN_ONT_distinct <- FN_ONT %>% 
@@ -259,10 +202,10 @@ FN_ONT_distinct <- FN_ONT %>%
 FN_ILL_distinct <- FN_ILL %>% 
   distinct(POS, count$n, sequencing, .keep_all = TRUE)
 
-FN_ILL_distinct <- FN_ILL_distinct[order(FN_ILL_distinct$POS), ]
+FN_ILL_distinct <- FN_ILL_distinct[order(FN_ILL_distinct$POS), ] #orders dataframe by position
 FN_ONT_distinct <- FN_ONT_distinct[order(FN_ONT_distinct$POS), ]
 
-FN_all_all <- full_join(FN_ONT_distinct, FN_ILL_distinct)
+FN_all_all <- full_join(FN_ONT_distinct, FN_ILL_distinct) #joins Illumina and ONT FNs
 
 FN_all_all$seq_type <- ifelse(FN_all_all$sequencing=="ONT", "ONT", "ILL")
 
@@ -297,9 +240,9 @@ everything_is_duplicated$ONT <- shift(everything_is_duplicated$ONT, 1)
 
 
 toDelete <- seq(1, nrow(everything_is_duplicated), 2)
-everything_is_duplicated <- everything_is_duplicated[ toDelete ,]
+everything_is_duplicated <- everything_is_duplicated[ toDelete ,] #deletes duplicated False Negative position rows
 
-dave <- ggplot(everything_is_duplicated) +
+ploteverything <- ggplot(everything_is_duplicated) +
   geom_point(aes(y = ONT, x = ILL)) +
   xlab("Illumina False Negative Count") +
   ylab("ONT False Negative Count") +
@@ -308,19 +251,19 @@ dave <- ggplot(everything_is_duplicated) +
   geom_abline(linetype = "dotted") +
   geom_text(aes(x = ILL, y = ONT, label = ifelse(ONT > 20 | ILL > 20, as.character(POS), "")),
             vjust = -0.01, size = 3, hjust = -0.2,
-            nudge_y = ifelse(everything_is_duplicated$POS == 29742, -3, 0)) + xlim(0,80)
+            nudge_y = ifelse(everything_is_duplicated$POS == 29742, -3, 0)) + xlim(0,80) #Change which positions overlap using this line of code. Labels all positions with ONT and ILL False Negative Counts > 20.
 
-ggsave("FalseNegatives_ExeterNT002.png",dave)
+ggsave("FalseNegatives_ExeterNT002.png",ploteverything) #Plot 
 
 
 everything_is_duplicated <- everything_is_duplicated %>%
   filter(ONT >= 8 | ILL >= 8)
 
 # Create the plot
-dave <- ggplot(everything_is_duplicated) +
+positionbyposition <- ggplot(everything_is_duplicated) +
   geom_point(aes(y=ONT, x=ILL)) +
   xlab("Illumina False Negative Count") +
   ylab("ONT False Negative Count") +
   ggtitle("Scatter plot of Illumina versus ONT False Negative counts") +facet_wrap(~ POS, nrow = 5)
 
-ggsave("FalseNegatives_ExeterNT002_PositionbyPosition.png",dave)
+ggsave("FalseNegatives_ExeterNT002_PositionbyPosition.png",positionbyposition) #Plots counts of False Negatives using ONT and ILL technologies by position
