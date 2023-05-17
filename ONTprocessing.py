@@ -10,7 +10,7 @@ ont_dir = [d for d in os.listdir('/home/mbxha18/allcombinations/kit14/10.4_SUP_P
 for e in ont_dir:
     print(e)
     os.chdir(f"/home/mbxha18/allcombinations/kit14/10.4_SUP_PROM_VARSCAN/NT001_super_barcoded/{e}/") #replace this example path with your ont_dir path
-    os.system(f"artic guppyplex --min-length 80 --max-length 480 --directory . --prefix guppyplexed.{e}") #run guppyplex filtering. Edit length of amplicons, for our analysis we selected 80 and 480, as average amplicon size was 280bp and artic suggests 200bp intervals either side. 
+    os.system(f"artic guppyplex --min-length 80 --max-length 480 --directory . --prefix guppyplexed.{e}") #run guppyplex filtering. Edit length of amplicons, for our analysis we selected 80 and 480, as average amplicon size ranged between 230-280bp and artic suggests 200bp intervals either side. 
 
 
 
