@@ -1,9 +1,11 @@
+#Loose Lab, University of Nottingham. 17.05.2023.
+#Takes demultiplexed ONT fastq files barcoded using Nimagen Indexing Kits (completed using X.py), matches them to their corresponding well plate using a sample sheet, and inputs them to the first two stages of the artic pipeline (guppuplex and minion).
+
 import os
 import pandas as pd
 
 # RUN guppyplex on each Nimagen folder in ont
-
-# ont_dir = [d for d in os.listdir('/home/mbxha18/allcombinations/kit14/10.4_SUP_PROM_VARSCAN/NT001_super_barcoded') if os.path.isdir(d)]
+ont_dir = [d for d in os.listdir('/home/mbxha18/allcombinations/kit14/10.4_SUP_PROM_VARSCAN/NT001_super_barcoded') if os.path.isdir(d)] 
 
 # for e in ont_dir:
 #     print(e)
