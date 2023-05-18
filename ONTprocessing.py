@@ -86,7 +86,7 @@ for e in ill_dir:
     print(e)
     os.chdir(f'/home/mbxha18/allcombinations/kit14/10.4_SUP_PROM_VARSCAN/ill_match/{e}')
     os.system(f"samtools mpileup -f /home/mbxha18/artic/fieldbioinformatics/test-data/primer-schemes/nCoV-2019/V9/nCoV-2019.reference.fasta -q 10 -d 1000000 Kit14.artic.10.4_SUP_PROM.{e}.primertrimmed.rg.sorted.bam > {e}.ont.pileup") #Run samtools mpileup, again with extremely high normalization value.
-    os.system(f"varscan mpileup2snp {e}.ont.pileup --min-var-freq 0.01  --p-value 1 --min-coverage 1 --min-reads2 1 > {e}.ont.mincov1.varscan.tsv")
+    os.system(f"varscan mpileup2snp {e}.ont.pileup --min-var-freq 0.01  --p-value 1 --min-coverage 1 --min-reads2 1 --strand-filter 0 > {e}.ont.mincov1.varscan.tsv")
     os.system(f"varscan mpileup2snp {e}.ont.pileup --min-var-freq 0.01 --min-coverage 8 > {e}.ont.mincov8.minvar0.01.varscan.tsv")
     os.system(f"varscan mpileup2snp {e}.ont.pileup --min-var-freq 0.02 --min-coverage 8 > {e}.ont.mincov8.minvar0.02.varscan.tsv")
     os.system(f"varscan mpileup2snp {e}.ont.pileup --min-var-freq 0.03 --min-coverage 8 > {e}.ont.mincov8.minvar0.03.varscan.tsv")
