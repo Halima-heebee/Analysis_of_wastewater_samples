@@ -6,7 +6,7 @@ library(dplyr)
 library(stringr)
 library(tidyr)
 for (d in dirs) {
-  setwd("/home/mbxha18/allcombinations/New_illumina/exeter/DAVE")
+  setwd("/home/mbxha18/allcombinations/New_illumina/exeter/DAVE") #Path containing list of positions in genome, Control SNP Locations, and the relationship between plate well and synthetic SARS-CoV-2 mixture
   list29903 <- read_table("29903.csv")
   all <- read_table("underscore.txt")
   selectedRows <- all[grep(substr(d, 82, 84), all$plate_well), ]
