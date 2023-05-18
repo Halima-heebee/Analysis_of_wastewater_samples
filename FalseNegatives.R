@@ -37,7 +37,7 @@ for (d in dirs) {
   expfrequencyonly <- expfrequencyonly[, colSums(expfrequencyonly != 0) > 0] #selects only SNPs with an expected frequency
   list <- colnames(expfrequencyonly)
   list <- gsub('_exp_frequency','', list)
-  List2 <- paste(unlist(list),collapse="") #lists expected lineages for the same
+  List2 <- paste(unlist(list),collapse="") #lists expected lineages for the sample
   # Set the working directory
   setwd(d)
   # Read the LR output file
@@ -72,7 +72,7 @@ for (d in dirs) {
   FP_ONT <- anti_join(LRoutput, truecontrols, by = c("Position" = "POS")) #identifies false positives
   assign(paste0("FP_ONT", substr(d, 11,100)), FP_ONT)
   # Compute the FN for the true SNPs
-  FN_ONT <- anti_join(truecontrols, LRvsTRUE, by = c("POS" = "Position")) #gives each sample (i.e. each plate well) a false positive dataframe
+  FN_ONT <- anti_join(truecontrols, LRvsTRUE, by = c("POS" = "Position")) #gives each sample (i.e. each plate well) a false negative dataframe
   
   FN_ONT$DEPTH <- LRdepths$DEPTH[match(FN_ONT$POS, LRdepths$POS)]
   assign(paste0("FN_ONT", substr(d, 11,100)), FN_ONT)
