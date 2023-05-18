@@ -1,3 +1,4 @@
+#Loose Lab Code (MG), 17.05.2023. Uses seqkit to downsample aligned bams.
 import os
 import subprocess
 
