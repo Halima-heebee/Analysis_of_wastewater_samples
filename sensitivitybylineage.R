@@ -1,6 +1,7 @@
-dirs <- list.dirs("/home/mbxha18/allcombinations/New_illumina/exeter/exeter_ill_vs_exeter_ont_NT001", recursive = FALSE)
-dirs <- dirs[!grepl("RECYCLE", dirs)]
-library(readr)
+#Loose Lab Code (MG), 17.05.2023. Graph 1 displays the effect of the minimum concentration of a particular lineage on the sensitivity to SNPs of that lineage for each sequencing technology. Graph 2 displays whether pure or mixed sample wells provide optimum sensitivity values for each technology. Graph 3 displays the effect of both lineage and mixed nature of the sample.
+dirs <- list.dirs("/home/mbxha18/allcombinations/New_illumina/exeter/exeter_ill_vs_exeter_ont_NT001", recursive = FALSE) #Provide path to directories containing both ONT and Illumina varscans for each sample well
+dirs <- dirs[!grepl("RECYCLE", dirs)] #removes the recycle bin when not running on terminal
+library(readr) #loads appropriate packages into environment
 library(dplyr)
 library(stringr)
 library(tidyr)
