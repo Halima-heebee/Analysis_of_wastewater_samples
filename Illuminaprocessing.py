@@ -1,4 +1,4 @@
-#Run Alex's nextflow (idk how), and move the sorted bams into the correct directory for varscanning
+#Once sorted bam files have been generated using alexnextflow.py, move the sorted bams into the correct directory for varscanning, one directory for each sample well plate.
 
 
 
