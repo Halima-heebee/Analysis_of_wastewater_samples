@@ -206,7 +206,7 @@ library(ggplot2)
 all3ONT <- all3ONT %>% filter(all3ONT$expectedfrequency > 0)
 all3ILL <- all3ILL %>% filter(all3ILL$expectedfrequency > 0)
 
-dave <- ggplot(data=all3ONT, aes(all3ILL$observedfrequency, all3ONT$observedfrequency)) + theme_classic() + xlim(c(0,1)) + ylim(c(0,1)) + ylab("ONT Observed Frequency") + xlab("Illumina Observed Frequency") + geom_point(aes(x= all3ONT$observedfrequency, y=all3ILL$observedfrequency))
+dave <- ggplot(data=all3ONT, aes(all3ILL$observedfrequency, all3ONT$observedfrequency)) + theme_classic() + xlim(c(0,1)) + ylim(c(0,1)) + ylab("ONT Observed Frequency") + xlab("Illumina Observed Frequency") + geom_point(aes(x= all3ONT$observedfrequency, y=all3ILL$observedfrequency)) #add alpha=all3ONT$depth if required
 corr <- cor.test(x=all3ONT$observedfrequency, y=all3ILL$observedfrequency, method = 'pearson') #calculates Spearman's Rank Correlation Coefficient
 corr
 
